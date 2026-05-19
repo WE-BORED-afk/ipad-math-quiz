@@ -170,7 +170,8 @@ export default function QuizEngine() {
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.detail || errData.error || `HTTP ${response.status}`);
       }
       
       const data = await response.json();
@@ -182,7 +183,7 @@ export default function QuizEngine() {
       }
     } catch (error) {
       console.error("Failed to fetch new quiz", error);
-      alert("ไม่สามารถดึงโจทย์จาก AI ได้ กรุณาตรวจสอบ GEMINI_API_KEY ใน Environment Variables");
+      alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setLoading(false);
     }
