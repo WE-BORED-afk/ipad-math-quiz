@@ -56,22 +56,34 @@ export async function POST(req: NextRequest) {
   "content": { "question": "...", "options": ["...", "...", "...", "..."], "correct_answer_index": 0, "hints": ["...", "..."], "explanation": "..." }
 }`;
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { response_mime_type: "application/json" },
-        }),
-      }
-    );
+    const models = [
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash",
+    ];
 
-    if (!geminiRes.ok) {
-      const err = await geminiRes.text();
-      console.error("Gemini API error:", err);
-      return NextResponse.json({ error: "Gemini API error", detail: err }, { status: 502 });
+    let geminiRes: Response | null = null;
+    let lastErr = "";
+
+    for (const model of models) {
+      geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { response_mime_type: "application/json" },
+          }),
+        }
+      );
+      if (geminiRes.ok) break;
+      lastErr = await geminiRes.text();
+      console.warn(`Model ${model} failed (${geminiRes.status}), trying next...`);
+    }
+
+    if (!geminiRes || !geminiRes.ok) {
+      return NextResponse.json({ error: "Gemini API error", detail: lastErr }, { status: 502 });
     }
 
     const geminiData = await geminiRes.json();
