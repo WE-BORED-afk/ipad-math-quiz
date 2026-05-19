@@ -1,0 +1,92 @@
+{
+  "name": "MathQuiz AI Generator (Fixed)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-math",
+        "responseMode": "lastNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "math-quiz-webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "YOUR_GEMINI_API_KEY_HERE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "jsonBody": "={{ \n{\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": `คุณเป็นผู้เชี่ยวชาญด้านการออกข้อสอบ ${$node[\"Webhook\"].json.body?.subject || \"คณิตศาสตร์\"} สำหรับแนวข้อสอบ ${$node[\"Webhook\"].json.body?.exam_type || \"A-Level\"} ${$node[\"Webhook\"].json.body?.category ? 'ในหมวดหมู่ ' + $node[\"Webhook\"].json.body.category : ''}\\nภารกิจของคุณคือสร้างโจทย์ในรูปแบบ JSON เท่านั้น\\n- ต้องใช้ภาษาไทย\\n- ใช้ LaTeX สำหรับสมการ ตัวแปร และสัญลักษณ์ทางวิทยาศาสตร์/คณิตศาสตร์ทั้งหมด (ครอบด้วย $...$)\\n- สำคัญมาก: ต้อง escape เครื่องหมาย backslash สำหรับคำสั่ง LaTeX ทุกครั้งด้วย double backslash (เช่น \\\\frac, \\\\pi, \\\\theta) เพื่อไม่ให้ JSON เกิด Error\\n- ตัวเลือก (options) ต้องมี 4 ตัวเลือกเท่านั้น\\n- อธิบายวิธีทำอย่างละเอียดเป็นขั้นเป็นตอนในช่อง explanation\\n- คำใบ้ (hints) ควรมี 2-3 ข้อ เพื่อช่วยไกด์ผู้เรียน\\nห้ามมีข้อความใดๆ นอกเหนือจาก JSON\\n\\nสร้างโจทย์ 1 ข้อ ${$node[\"Webhook\"].json.body?.topic ? 'เรื่อง ' + $node[\"Webhook\"].json.body.topic : ''} ระดับความยาก ${$node[\"Webhook\"].json.body?.difficulty || \"ปานกลาง\"} โดยผลลัพธ์ต้องตรงตามโครงสร้าง JSON นี้:\\n{\\n  \"metadata\": { \"topic\": \"...\", \"sub_topic\": \"...\", \"difficulty\": \"...\", \"exam_type\": \"${$node[\"Webhook\"].json.body?.exam_type || \"A-Level\"}\" },\\n  \"content\": { \"question\": \"...\", \"options\": [\"...\", \"...\", \"...\", \"...\"], \"correct_answer_index\": 0, \"hints\": [\"...\", \"...\"], \"explanation\": \"...\" }\\n}`\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"response_mime_type\": \"application/json\"\n  }\n}\n}}"
+      },
+      "id": "2",
+      "name": "Call Gemini API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const response = $input.first().json;\nlet text = response.candidates[0].content.parts[0].text;\n\n// Fix unescaped backslashes caused by LaTeX (e.g., \\pi -> \\\\pi) so JSON.parse doesn't crash\ntext = text.replace(/\\\\(?![\\\"\\\\\\\\/bfnrtu])/g, \"\\\\\\\\\");\n\nreturn JSON.parse(text);"
+      },
+      "id": "3",
+      "name": "Parse JSON to Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        650,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Call Gemini API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Gemini API": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON to Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {}
+}
