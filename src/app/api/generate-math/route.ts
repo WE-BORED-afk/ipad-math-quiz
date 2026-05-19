@@ -1,5 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 
+function parseQuizJson(text: string) {
+  // Strategy 1: Parse directly
+  try {
+    return JSON.parse(text);
+  } catch { /* continue */ }
+
+  // Strategy 2: Fix invalid backslash escapes (e.g. \pi, \alpha, \cdot)
+  // Valid JSON escapes: \", \\, \/, \b, \f, \n, \r, \t, \uXXXX
+  const fixed = text.replace(/\\(?!["\\\/bfnrtu]|u[0-9a-fA-F]{4})/g, "\\\\");
+  try {
+    return JSON.parse(fixed);
+  } catch { /* continue */ }
+
+  // Strategy 3: Remove control characters and try again
+  const cleaned = fixed.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+  try {
+    return JSON.parse(cleaned);
+  } catch { /* continue */ }
+
+  // Strategy 4: Extract from markdown code block
+  const blockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (blockMatch) {
+    const blockFixed = blockMatch[1].replace(/\\(?!["\\\/bfnrtu]|u[0-9a-fA-F]{4})/g, "\\\\");
+    try {
+      return JSON.parse(blockFixed);
+    } catch { /* continue */ }
+  }
+
+  throw new Error(`Unable to parse JSON from Gemini response. Raw (first 300 chars): ${text.substring(0, 300)}`);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { exam_type, subject, category, topic, difficulty } = await req.json();
@@ -13,7 +44,7 @@ export async function POST(req: NextRequest) {
 ภารกิจของคุณคือสร้างโจทย์ในรูปแบบ JSON เท่านั้น
 - ต้องใช้ภาษาไทย
 - ใช้ LaTeX สำหรับสมการ ตัวแปร และสัญลักษณ์ทางวิทยาศาสตร์/คณิตศาสตร์ทั้งหมด (ครอบด้วย $...$)
-- สำคัญมาก: ต้อง escape เครื่องหมาย backslash สำหรับคำสั่ง LaTeX ทุกครั้งด้วย double backslash (เช่น \\\\frac, \\\\pi, \\\\theta) เพื่อไม่ให้ JSON เกิด Error
+- สำคัญมาก: ในไฟล์ JSON ทุก backslash ของ LaTeX ต้องใส่เป็น double backslash เสมอ (เช่น \\\\frac, \\\\pi, \\\\theta, \\\\alpha, \\\\sqrt, \\\\cdot, \\\\times)
 - ตัวเลือก (options) ต้องมี 4 ตัวเลือกเท่านั้น
 - อธิบายวิธีทำอย่างละเอียดเป็นขั้นเป็นตอนในช่อง explanation
 - คำใบ้ (hints) ควรมี 2-3 ข้อ เพื่อช่วยไกด์ผู้เรียน
@@ -44,12 +75,9 @@ export async function POST(req: NextRequest) {
     }
 
     const geminiData = await geminiRes.json();
-    let text: string = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    const text: string = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
-    // Fix unescaped backslashes from LaTeX before parsing
-    text = text.replace(/\\(?!["\\\/bfnrtu])/g, "\\\\");
-
-    const quiz = JSON.parse(text);
+    const quiz = parseQuizJson(text);
     return NextResponse.json(quiz);
 
   } catch (err: unknown) {

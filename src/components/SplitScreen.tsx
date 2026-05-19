@@ -12,8 +12,8 @@ export default function SplitScreen() {
         <QuizEngine />
       </div>
 
-      {/* Right Pane: Drawing Canvas */}
-      <div className="w-full lg:w-[55%] h-[600px] lg:h-auto lg:min-h-[calc(100vh-3.5rem)] relative bg-[#f8f9fa] dark:bg-black transition-colors duration-300">
+      {/* Right Pane: Drawing Canvas - sticky so it stays visible while scrolling */}
+      <div className="w-full lg:w-[55%] h-[600px] lg:h-[calc(100vh-4rem)] lg:sticky lg:top-16 relative bg-[#f8f9fa] dark:bg-black transition-colors duration-300 flex-shrink-0">
         <DrawingCanvas />
       </div>
     </div>
