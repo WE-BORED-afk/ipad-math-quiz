@@ -21,7 +21,7 @@ export default function DrawingCanvas() {
   return (
     <div className="absolute inset-0 z-0 isolate">
       <Tldraw 
-        inferDarkMode={isDarkMode}
+        forceDarkMode={isDarkMode}
       />
     </div>
   );
