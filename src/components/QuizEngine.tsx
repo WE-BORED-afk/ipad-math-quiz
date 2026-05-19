@@ -182,7 +182,7 @@ export default function QuizEngine() {
       }
     } catch (error) {
       console.error("Failed to fetch new quiz", error);
-      alert("ไม่สามารถดึงโจทย์จาก AI ได้ กรุณาตรวจสอบว่า n8n กำลังรันอยู่และ Webhook Active หรือไม่");
+      alert("ไม่สามารถดึงโจทย์จาก AI ได้ กรุณาตรวจสอบ GEMINI_API_KEY ใน Environment Variables");
     } finally {
       setLoading(false);
     }
@@ -198,22 +198,21 @@ export default function QuizEngine() {
     });
   }
 
-  if (loading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center flex-col gap-6 bg-transparent">
-        <div className="relative">
-          <div className="absolute inset-0 border-2 border-cyan-400 rounded-full animate-ping opacity-20"></div>
-          <div className="absolute inset-[-10px] bg-blue-500/20 blur-xl rounded-full"></div>
-          <Loader2 className="w-12 h-12 animate-spin text-cyan-400 relative z-10" />
-        </div>
-        <p className="text-cyan-500/80 animate-pulse font-mono text-sm tracking-widest uppercase">system.generating(quiz)...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6 md:p-10 max-w-2xl mx-auto flex flex-col gap-8 relative font-sans">
+      {/* Loading Overlay */}
+      {loading && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm rounded-2xl">
+          <div className="relative">
+            <div className="absolute inset-0 border-2 border-cyan-400 rounded-full animate-ping opacity-20"></div>
+            <div className="absolute inset-[-10px] bg-blue-500/20 blur-xl rounded-full"></div>
+            <Loader2 className="w-12 h-12 animate-spin text-cyan-400 relative z-10" />
+          </div>
+          <p className="text-cyan-500/80 animate-pulse font-mono text-sm tracking-widest uppercase">system.generating(quiz)...</p>
+        </div>
+      )}
       {/* Settings Modal */}
+
       {isModalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-[#050505] w-full max-w-md rounded-2xl shadow-[0_0_50px_rgba(6,182,212,0.15)] border border-blue-900/40 animate-in zoom-in-95 duration-300 flex flex-col relative">
