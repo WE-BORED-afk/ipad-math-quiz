@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { InlineMath } from "react-katex";
 import { Loader2, Lightbulb, CheckCircle2, XCircle, RefreshCw, Settings, X, ChevronRight, ChevronDown, Lock } from "lucide-react";
 
@@ -212,9 +213,9 @@ export default function QuizEngine() {
           <p className="text-cyan-500/80 animate-pulse font-mono text-sm tracking-widest uppercase">system.generating(quiz)...</p>
         </div>
       )}
-      {/* Settings Modal */}
+      {/* Settings Modal rendered via Portal to escape stacking context on iPad */}
 
-      {isModalOpen && (
+      {isModalOpen && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-[#050505] w-full max-w-md rounded-2xl shadow-[0_0_50px_rgba(6,182,212,0.15)] border border-blue-900/40 animate-in zoom-in-95 duration-300 flex flex-col relative">
             <div className="p-5 border-b border-white/5 flex justify-between items-center bg-white/5 rounded-t-2xl">
@@ -429,7 +430,7 @@ export default function QuizEngine() {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Header Info */}
       <div className="flex items-center justify-between">
