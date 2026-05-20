@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { InlineMath } from "react-katex";
 import { Loader2, Lightbulb, CheckCircle2, XCircle, RefreshCw, Settings, X, ChevronRight, ChevronDown, Lock } from "lucide-react";
@@ -108,6 +108,8 @@ const EXAM_DATA: Record<ExamType, SubjectData[]> = {
 const DIFFICULTIES = ["ง่าย", "ปานกลาง", "ยาก"];
 
 export default function QuizEngine() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const [quiz, setQuiz] = useState<MathQuiz | null>(mockQuiz);
   const [loading, setLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -215,7 +217,7 @@ export default function QuizEngine() {
       )}
       {/* Settings Modal rendered via Portal to escape stacking context on iPad */}
 
-      {isModalOpen && typeof document !== "undefined" && createPortal(
+      {mounted && isModalOpen && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-[#050505] w-full max-w-md rounded-2xl shadow-[0_0_50px_rgba(6,182,212,0.15)] border border-blue-900/40 animate-in zoom-in-95 duration-300 flex flex-col relative">
             <div className="p-5 border-b border-white/5 flex justify-between items-center bg-white/5 rounded-t-2xl">
