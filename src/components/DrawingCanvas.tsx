@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Trash2, Pencil, Eraser } from "lucide-react";
+import { Trash2, Pencil, Eraser, Undo2, Redo2 } from "lucide-react";
 
 const COLORS = ["#000000", "#1e90ff", "#f43f5e", "#22c55e", "#f59e0b", "#a855f7", "#ffffff"];
 const SIZES = [2, 4, 8, 14];
+const MAX_HISTORY = 40;
 
 export default function DrawingCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -12,9 +13,59 @@ export default function DrawingCanvas() {
   const isDrawing = useRef(false);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
 
+  // History for undo/redo — stores ImageData snapshots
+  const history = useRef<ImageData[]>([]);
+  const historyIndex = useRef(-1);
+
   const [tool, setTool] = useState<"pen" | "eraser">("pen");
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(4);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
+  const syncButtons = () => {
+    setCanUndo(historyIndex.current > 0);
+    setCanRedo(historyIndex.current < history.current.length - 1);
+  };
+
+  /** Save current canvas state to history */
+  const saveSnapshot = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const snap = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    // Drop any redo states
+    history.current = history.current.slice(0, historyIndex.current + 1);
+    history.current.push(snap);
+    if (history.current.length > MAX_HISTORY) {
+      history.current.shift();
+    }
+    historyIndex.current = history.current.length - 1;
+    syncButtons();
+  }, []);
+
+  const undo = useCallback(() => {
+    if (historyIndex.current <= 0) return;
+    historyIndex.current -= 1;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.putImageData(history.current[historyIndex.current], 0, 0);
+    syncButtons();
+  }, []);
+
+  const redo = useCallback(() => {
+    if (historyIndex.current >= history.current.length - 1) return;
+    historyIndex.current += 1;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.putImageData(history.current[historyIndex.current], 0, 0);
+    syncButtons();
+  }, []);
 
   const getPos = (clientX: number, clientY: number, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
@@ -51,20 +102,23 @@ export default function DrawingCanvas() {
   }, []);
 
   const endDraw = useCallback(() => {
+    if (!isDrawing.current) return;
     isDrawing.current = false;
     lastPos.current = null;
-  }, []);
+    saveSnapshot();
+  }, [saveSnapshot]);
 
-  const clearCanvas = () => {
+  const clearCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-  };
+    saveSnapshot();
+  }, [saveSnapshot]);
 
-  // Resize observer
+  // Resize observer — reinitialise history on resize
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
@@ -78,12 +132,37 @@ export default function DrawingCanvas() {
       if (!ctx) return;
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, w, h);
+      // Reset history after resize
+      history.current = [];
+      historyIndex.current = -1;
+      // Save blank state as initial snapshot
+      const snap = ctx.getImageData(0, 0, w, h);
+      history.current.push(snap);
+      historyIndex.current = 0;
+      syncButtons();
     };
     resize();
     const observer = new ResizeObserver(resize);
     observer.observe(container);
     return () => observer.disconnect();
   }, []);
+
+  // Keyboard shortcuts: Ctrl+Z / Ctrl+Shift+Z
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "y") {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [undo, redo]);
 
   // Mouse events
   useEffect(() => {
@@ -159,6 +238,28 @@ export default function DrawingCanvas() {
             title="ยางลบ"
           >
             <Eraser className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="w-px h-5 bg-gray-200 dark:bg-zinc-700 shrink-0" />
+
+        {/* Undo / Redo */}
+        <div className="flex gap-1">
+          <button
+            onClick={undo}
+            disabled={!canUndo}
+            className={`p-1.5 rounded-lg transition-all ${canUndo ? "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800" : "text-gray-300 dark:text-zinc-600 cursor-not-allowed"}`}
+            title="ย้อนกลับ (Ctrl+Z)"
+          >
+            <Undo2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={redo}
+            disabled={!canRedo}
+            className={`p-1.5 rounded-lg transition-all ${canRedo ? "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800" : "text-gray-300 dark:text-zinc-600 cursor-not-allowed"}`}
+            title="ทำซ้ำ (Ctrl+Shift+Z)"
+          >
+            <Redo2 className="w-4 h-4" />
           </button>
         </div>
 
