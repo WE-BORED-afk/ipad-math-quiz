@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-01T14:17:34Z",
+  "title": "Design System: MathQuiz AI",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Calm Indigo", "canonical": "#3b82f6", "tonalRamp": ["#eff6ff", "#dbeafe", "#bfdbfe", "#93c5fd", "#60a5fa", "#3b82f6", "#2563eb", "#1d4ed8", "#1e40af", "#1e3a8a"] },
+      "accent-cool": { "role": "secondary", "displayName": "Soft Sky", "canonical": "#06b6d4", "tonalRamp": ["#ecfeff", "#cffafe", "#a5f3fc", "#67e8f9", "#22d3ee", "#06b6d4", "#0891b2", "#0e7490", "#155e75", "#164e63"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero headlines only." },
+      "body": { "displayName": "Body", "purpose": "General reading, explanations, and math descriptions." },
+      "label": { "displayName": "Label / Mono", "purpose": "Metadata, tags, and small utility text." }
+    },
+    "shadows": [
+      { "name": "lifted-action", "value": "0 10px 15px -3px rgba(59, 130, 246, 0.2)", "purpose": "Used on primary CTA buttons to make them feel pressable." },
+      { "name": "surface-elevation", "value": "0 4px 30px rgba(0, 0, 0, 0.1)", "purpose": "Used on sticky headers or floating elements to detach them from the scrolling background." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Used for main calls to action like 'Start Quiz'.",
+      "html": "<button class=\"ds-btn-primary\">เริ่มทำโจทย์เลย</button>",
+      "css": ".ds-btn-primary { background: #3b82f6; color: #ffffff; padding: 0.875rem 2rem; border-radius: 0.75rem; font-weight: 600; border: none; cursor: pointer; transition: background-color 0.15s, transform 0.15s, box-shadow 0.15s; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2); } .ds-btn-primary:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3); }"
+    },
+    {
+      "name": "Feature Card",
+      "kind": "card",
+      "refersTo": "card-feature",
+      "description": "Used to display features or quiz options.",
+      "html": "<div class=\"ds-card-feature\"><h3>โจทย์ AI</h3><p>สร้างโจทย์ใหม่ทุกข้อ</p></div>",
+      "css": ".ds-card-feature { background: #f8fafc; border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 1rem; padding: 1.5rem; transition: border-color 0.15s; } .ds-card-feature h3 { margin: 0 0 0.5rem 0; font-weight: 700; color: #0f172a; } .ds-card-feature p { margin: 0; color: #475569; font-size: 0.875rem; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Focused Chalkboard",
+    "overview": "The design system for MathQuiz AI is built around the concept of a \"Focused Chalkboard\"—sharp, high-contrast, serious but approachable. It prioritizes the content (math problems, equations) above all else, ensuring the student's cognitive load is spent on learning rather than navigating the interface.\n\nWe explicitly reject the playful, gamified aesthetics of apps like Duolingo, the lightweight feel of flashcard apps, and the corporate SaaS aesthetics that rely on metric-hero sections or gradient text.",
+    "keyCharacteristics": [
+      "Content-first hierarchy where equations are the heroes.",
+      "High-contrast elements for accessibility and clarity.",
+      "Restrained use of color to minimize distractions.",
+      "Precise typography that supports dense mathematical information."
+    ],
+    "rules": [
+      { "name": "The One Voice Rule", "body": "The primary accent is used strictly for actions and focal points. It should not bleed into backgrounds or large surface areas.", "section": "colors" },
+      { "name": "The Equation Priority Rule", "body": "LaTeX rendering must always be crystal clear and legible across all viewports. Do not constrain line heights artificially where equations might overlap.", "section": "typography" },
+      { "name": "The Purposeful Depth Rule", "body": "Shadows must have a spatial rationale. If an element does not sit *above* the background logically, it should not cast a shadow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use `Instrument Serif` for hero moments to contrast with the technical UI.",
+      "Do maintain WCAG AA contrast (≥ 4.5:1) for all body text and equations.",
+      "Do use soft, lifted shadows to indicate interactivity and hierarchy."
+    ],
+    "donts": [
+      "Don't use SaaS landing-page clichés like gradient text or over-rounded \"ghost-card\" shadows.",
+      "Don't use generic AI tool marketing aesthetics (e.g., purple-to-blue neon gradients).",
+      "Don't use glassmorphism as a default decoration; keep surfaces solid and legible.",
+      "Don't make the UI playful or gamified; avoid the Duolingo aesthetic."
+    ]
+  }
+}

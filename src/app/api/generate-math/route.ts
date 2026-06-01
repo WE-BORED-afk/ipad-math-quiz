@@ -33,7 +33,7 @@ function parseQuizJson(text: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { exam_type, subject, category, topic, difficulty } = await req.json();
+    const { exam_type, subject, category, topic, difficulty, model } = await req.json();
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -56,11 +56,16 @@ export async function POST(req: NextRequest) {
   "content": { "question": "...", "options": ["...", "...", "...", "..."], "correct_answer_index": 0, "hints": ["...", "..."], "explanation": "..." }
 }`;
 
-    const models = [
-      "gemini-2.5-flash",
-      "gemini-2.0-flash",
-      "gemini-1.5-flash",
-    ];
+    const models = model 
+      ? [model] 
+      : [
+          "gemini-3.5-flash",
+          "gemini-3-flash",
+          "gemini-2.5-flash",
+          "gemini-3.1-flash-lite",
+          "gemini-2.5-flash-lite",
+          "gemini-1.5-flash"
+        ];
 
     let geminiRes: Response | null = null;
     let lastErr = "";
